@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fórmulas de Regresión</title>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)']],
+                displayMath: [['\\[', '\\]']]
+            }
+        };
+    </script>
+</head>
+<body>
+    <div id="formula1">
+        \[
+        Y = Bx + A
+        \]
+    </div>
+    <div id="formula2">
+        \[
+        B = \frac{n \sum x_i y_i - \sum x_i \sum y_i}{n \sum x_i^2 - (\sum x_i)^2}
+        \]
+    </div>
+    <div id="formula3">
+        \[
+        A = \bar{y} - B \bar{x}
+        \]
+    </div>
+    <div id="formula4">
+        \[
+        S_{yx} = \sqrt{\frac{\sum y_i^2 - A \sum y_i - B \sum x_i y_i}{n - 2}}
+        \]
+    </div>
+    <div id="formula5">
+        \[
+        r = \frac{n \sum x_i y_i - \sum x_i \sum y_i}{\sqrt{[n \sum x_i^2 - (\sum x_i)^2][n \sum y_i^2 - (\sum y_i)^2]}}
+        \]
+    </div>
+</body>
+</html>

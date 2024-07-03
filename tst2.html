@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulación de Tiro Parabólico</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f0f0;
+        }
+        #simulacion {
+            border: 1px solid #333;
+            background-color: #fff;
+        }
+        #controles {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+        label, input, button, span {
+            margin: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #info {
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Simulación de Tiro Parabólico</h1>
+    <canvas id="simulacion" width="800" height="400"></canvas>
+    <div id="controles">
+        <label for="velocidad">Velocidad inicial (m/s):</label>
+        <input type="range" id="velocidad" value="20" min="1" max="100">
+        <span id="velocidadDisplay">20</span>
+        <label for="angulo">Ángulo (grados):</label>
+        <input type="range" id="angulo" value="60" min="0" max="90">
+        <span id="anguloDisplay">60</span>
+        <button id="iniciar">Iniciar Simulación</button>
+    </div>
+    <div id="info">
+        <p>Posición X: <span id="posX">0</span> m</p>
+        <p>Posición Y: <span id="posY">0</span> m</p>
+        <p>Tiempo: <span id="tiempo">0</span> s</p>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <script>
+        // Configuración inicial
+        let v0 = 20;
+        let alfa = 60;
+        const g = 9.81;
+        const escala = 5;
+
+        // Elementos del DOM
+        const canvas = document.getElementById('simulacion');
+        const ctx = canvas.getContext('2d');
+        const iniciarBtn = document.getElementById('iniciar');
+        const velocidadInput = document.getElementById('velocidad');
+        const anguloInput = document.getElementById('angulo');
+        const velocidadDisplay = document.getElementById('velocidadDisplay');
+        const anguloDisplay = document.getElementById('anguloDisplay');
+        const posXSpan = document.getElementById('posX');
+        const posYSpan = document.getElementById('posY');
+        const tiempoSpan = document.getElementById('tiempo');
+
+        // Configuración de Matter.js
+        const Engine = Matter.Engine,
+              Render = Matter.Render,
+              World = Matter.World,
+              Bodies = Matter.Bodies,
+              Body = Matter.Body,
+              Runner = Matter.Runner;
+
+        let engine = Engine.create();
+        let world = engine.world;
+
+        let render = Render.create({
+            canvas: canvas,
+            engine: engine,
+            options: {
+                width: 800,
+                height: 400,
+                wireframes: false,
+                background: '#87CEEB'
+            }
+        });
+
+        let suelo = Bodies.rectangle(400, 390, 810, 20, { isStatic: true, render: { fillStyle: '#2E8B57' } });
+        let proyectil = Bodies.circle(50, 370, 10, { 
+            restitution: 0.5,
+            friction: 0.005,
+            frictionAir: 0,
+            render: { fillStyle: '#FF0000' }
+        });
+
+        World.add(world, [suelo, proyectil]);
+
+        function calcularTrayectoria(v0, alfa) {
+            const v0x = v0 * Math.cos(alfa * Math.PI / 180);
+            const v0y = v0 * Math.sin(alfa * Math.PI / 180);
+            const tiempoVuelo = 2 * v0y / g;
+            const puntos = [];
+            for (let t = 0; t <= tiempoVuelo; t += 0.1) {
+                const x = v0x * t * escala;
+                const y = (380 - (v0y * t - 0.5 * g * t * t) * escala);
+                puntos.push({ x, y });
+            }
+            return puntos;
+        }
+
+        function dibujarTrayectoria(puntos) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.beginPath();
+            ctx.setLineDash([5, 5]);
+            ctx.moveTo(puntos[0].x, puntos[0].y);
+            for (let i = 1; i < puntos.length; i++) {
+                ctx.lineTo(puntos[i].x, puntos[i].y);
+            }
+            ctx.strokeStyle = 'rgba(255, 0, 0, 0.7)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        function actualizarTrayectoria() {
+            v0 = parseFloat(velocidadInput.value);
+            alfa = parseFloat(anguloInput.value);
+            const puntos = calcularTrayectoria(v0, alfa);
+            if (puntos && puntos.length > 0) {
+                dibujarTrayectoria(puntos);
+            }
+        }
+
+        function iniciarSimulacion() {
+            World.clear(world);
+            Engine.clear(engine);
+
+            suelo = Bodies.rectangle(400, 390, 810, 20, { isStatic: true, render: { fillStyle: '#2E8B57' } });
+            proyectil = Bodies.circle(50, 370, 10, { 
+                restitution: 0.5,
+                friction: 0.005,
+                frictionAir: 0,
+                render: { fillStyle: '#FF0000' }
+            });
+
+            World.add(world, [suelo, proyectil]);
+
+            v0 = parseFloat(velocidadInput.value);
+            alfa = parseFloat(anguloInput.value);
+
+            const v0x = v0 * Math.cos(alfa * Math.PI / 180);
+            const v0y = -v0 * Math.sin(alfa * Math.PI / 180);
+
+            Body.setVelocity(proyectil, { x: v0x * escala / 30, y: v0y * escala / 30 });
+
+            const runner = Runner.create();
+            Runner.run(runner, engine);
+            Render.run(render);
+            actualizarInfo();
+        }
+
+        function actualizarInfo() {
+            const pos = proyectil.position;
+            const tiempo = engine.timing.timestamp / 1000;
+
+            posXSpan.textContent = (pos.x / escala).toFixed(2);
+            posYSpan.textContent = ((380 - pos.y) / escala).toFixed(2);
+            tiempoSpan.textContent = tiempo.toFixed(2);
+
+            if (pos.y < 390) {
+                requestAnimationFrame(actualizarInfo);
+            }
+        }
+
+        iniciarBtn.addEventListener('click', iniciarSimulacion);
+        velocidadInput.addEventListener('input', () => {
+            velocidadDisplay.textContent = velocidadInput.value;
+            actualizarTrayectoria();
+        });
+        anguloInput.addEventListener('input', () => {
+            anguloDisplay.textContent = anguloInput.value;
+            actualizarTrayectoria();
+        });
+
+        Render.run(render);
+        actualizarTrayectoria();
+    </script>
+</body>
+</html>

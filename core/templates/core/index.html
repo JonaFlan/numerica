@@ -1,0 +1,27 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Numérica{% endblock %}
+
+{% block custom %}
+<link rel="stylesheet" href=" {% static 'css/index.css' %} ">
+{% endblock %}
+
+{% block content %}
+<div class="content">
+    <!-- <div class="header mb-2">
+        <h1>Numérica</h1>
+    </div> -->
+    <div>
+        <a class="btn aa mb-2" href="{% url 'derivadas' %}">
+            Aplicación de la derivada
+        </a>
+    </div>
+    
+    <div>
+        <a class="btn aa" href='{% url "regresion" %}'>
+            Regresión lineal
+        </a>
+    </div>
+</div>
+{% endblock %}

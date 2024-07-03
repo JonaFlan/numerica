@@ -1,0 +1,373 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Regresión Lineal{% endblock %}
+
+{% block custom %}
+<script src="https://bossanova.uk/jspreadsheet/v4/jexcel.js"></script>
+<link rel="stylesheet" href="https://bossanova.uk/jspreadsheet/v4/jexcel.css" type="text/css" />
+<script src="https://jsuites.net/v4/jsuites.js"></script>
+<link rel="stylesheet" href="https://jsuites.net/v4/jsuites.css" type="text/css" />
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script>
+    window.MathJax = {
+        tex: {
+            inlineMath: [['\\(', '\\)']],
+            displayMath: [['\\[', '\\]']]
+        }
+    };
+</script>
+<link rel="stylesheet" href=" {% static 'css/regresion.css' %} ">
+{% endblock %}
+
+{% block content %}
+<div class='formulario d-flex w-100 mt-3 justify-content-end position-absolute'>
+    <a class="me-3" href="{% url 'formularioR' %}">
+        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="35" fill="currentColor" class="bi bi-info-circle me-3" viewBox="0 0 16 16">
+            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+            <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+        </svg>
+    </a>
+</div>
+<div class="container">
+    <h1>Regresión lineal</h1>
+    <div class="row">
+        <div class="col-12 d-flex justify-content-center">
+            <div id="spreadsheet"></div>
+        </div>
+    </div>
+    <div class="row d-flex justify-content-center">
+        <div class="col-12 text-center d-flex justify-content-center flex-column">
+            <button id="calculate-button">Calcular Regresión</button>
+            <button id="reset-button" style="display:none;">Reiniciar</button>
+            <div id="result">
+            </div>
+        </div>
+        <div id="regression-graph"></div>
+    </div>
+
+    <div class="row d-flex justify-content-center mt-3">
+        <div id="div-input-x" style="display:none;" class="col-md-6 text-center">
+            <label for="input-x">Valor de X:</label>
+            <input type="number" id="input-x" placeholder="Ingrese un valor para X">
+            <button id="calculate-y-button">Calcular Y</button>
+            <div id="y-result"></div>
+        </div>
+    </div>
+
+    <div class="row d-flex justify-content-center mt-3">
+        <div id="div-input-y" style="display:none;" class="col-md-6 text-center">
+            <label for="input-y">Valor de Y:</label>
+            <input type="number" id="input-y" placeholder="Ingrese un valor para Y">
+            <button id="calculate-x-button">Calcular X</button>
+            <div id="x-result"></div>
+        </div>
+    </div>
+</div>
+
+<div id="formula-modal" class="modal">
+    <div class="modal-content">
+        <span class="close d-none">&times;</span>
+        <div id="formula-container"></div>
+    </div>
+</div>
+<script>
+    // var initialData = [[1,88],[2,87],[3,84],[4,82],[5,79]];
+    var initialData = [];
+    var originalGraphTitle = 'Regresión Lineal';
+    var originalGraphLayout = {
+        title: originalGraphTitle
+    };
+
+    var spreadsheet = jexcel(document.getElementById('spreadsheet'), {
+        data: initialData,
+        minDimensions: [2, 2],
+        columns: [
+            { type: 'numeric', title: 'Independiente', width: 120 },
+            { type: 'numeric', title: 'Dependiente', width: 120 },
+            { type: 'numeric', title: 'x · y', width: 120 },
+            { type: 'numeric', title: 'x²', width: 120 },
+            { type: 'numeric', title: 'y²', width: 120 }
+        ],
+        allowInsertRow: true,
+        allowInsertColumn: false,
+        allowDeleteRow: true,
+        allowDeleteColumn: false
+    });
+
+    document.getElementById('calculate-button').addEventListener('click', function() {
+        var data = spreadsheet.getData().map(row => row.slice(0, 2)); // Solo enviar las dos primeras columnas
+        // Convertir los datos a números
+        var numericData = data.map(row => row.map(value => parseFloat(value)));
+
+        fetch('/calcular_regresion/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{csrf_token}}'
+            },
+            body: JSON.stringify(numericData)
+        })
+        .then(response => response.json())
+        .then(result => {
+            // Formatear y mostrar el resultado
+            var resultContent = `
+                <p>
+                    <strong>Coeficiente de correlación (r):</strong> ${result.r.toFixed(3)} 
+                    <a href="#" class="formula-link" data-type="r" data-values='${JSON.stringify({...result, n: numericData.length})}'>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="black" class="bi bi-caret-down-fill" viewBox="0 0 16 16"><path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+                        </svg>
+                    </a>
+                </p>
+                <p>
+                    <strong>Coeficiente de determinación (r²):</strong> ${result.r_cuadrado.toFixed(3)}
+                    <a href="#" class="formula-link" data-type="r2" data-values='${JSON.stringify({...result, n: numericData.length})}'>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="black" class="bi bi-caret-down-fill" viewBox="0 0 16 16"><path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+                        </svg>
+                    </a>    
+                </p>
+                <p>
+                    <strong>Pendiente (B):</strong> ${result.pendiente.toFixed(3)}
+                    <a href="#" class="formula-link" data-type="pendiente" data-values='${JSON.stringify({...result, n: numericData.length})}'>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="black" class="bi bi-caret-down-fill" viewBox="0 0 16 16"><path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+                        </svg>
+                    </a>
+                </p>
+                <p>
+                    <strong>Intercepción (A):</strong> ${result.intercepcion.toFixed(3)}
+                    <a href="#" class="formula-link" data-type="intercepcion" data-values='${JSON.stringify({...result, n: numericData.length})}'>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="black" class="bi bi-caret-down-fill" viewBox="0 0 16 16"><path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+                        </svg>
+                    </a>
+                </p>
+                <p>
+                    <strong>Ecuación de la recta:</strong> ${result.ecuacion}
+                    <a href="#" class="formula-link" data-type="ecuacion" data-values='${JSON.stringify({...result, n: numericData.length})}'>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="black" class="bi bi-caret-down-fill" viewBox="0 0 16 16"><path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+                        </svg>
+                    </a>
+                </p>
+            `;
+            document.getElementById('result').innerHTML = resultContent;
+            document.getElementById('reset-button').style.display = 'inline-block';
+            document.getElementById('calculate-button').style.display = 'none';
+
+            // Actualizar la hoja de cálculo con los nuevos valores calculados
+            var updatedData = result.valores.map(row => [row.x, row.y, row['x*y'], row['x^2'], row['y^2']]);
+            spreadsheet.setData(updatedData);
+
+            // Agregar una fila para las sumas
+            var sumRow = [result.suma_x, result.suma_y, result.suma_xy, result.suma_x2, result.suma_y2];
+            spreadsheet.insertRow(sumRow, spreadsheet.getData().length);
+
+            // Actualizar el gráfico
+            var x_values = numericData.map(row => row[0]);
+            var y_values = numericData.map(row => row[1]);
+
+            // Calcular los límites de los valores de X e Y
+            var minX = Math.min(...x_values);
+            var maxX = Math.max(...x_values);
+            var minY = Math.min(...y_values);
+            var maxY = Math.max(...y_values);
+
+            // Extender los valores de X para la línea de regresión
+            var x_extended = [minX - 1000000000, maxX + 1000000000]; // Ajusta el rango según sea necesario
+            var extended_regression_line = x_extended.map(x => result.intercepcion + result.pendiente * x);
+
+            var trace1 = {
+                x: x_values,
+                y: y_values,
+                mode: 'markers',
+                name: 'Datos'
+            };
+
+            var trace2 = {
+                x: x_extended,
+                y: extended_regression_line,
+                mode: 'lines',
+                name: 'Recta de Regresión'
+            };
+
+            var layout = {
+                title: 'Regresión Lineal',
+                xaxis: {
+                    title: 'Variable Independiente',
+                    range: [minX - 0.5, maxX + 0.5] // Ajustar el rango del eje X
+                },
+                yaxis: {
+                    title: 'Variable Dependiente',
+                    range: [minY - 5, maxY + 5] // Ajustar el rango del eje Y
+                }
+            };
+
+            document.getElementById("div-input-x").style.display = 'block';
+            document.getElementById("div-input-y").style.display = 'block';
+
+            var data = [trace1, trace2];
+            Plotly.newPlot('regression-graph', data, layout);
+
+            // Mostrar el botón de reiniciar y ocultar el botón de calcular regresión
+            document.getElementById('calculate-button').style.display = 'none';
+            document.getElementById('reset-button').style.display = 'block';
+
+            // Limpiar el contenido del div y los eventos del botón calcular Y
+            document.getElementById('input-x').value = '';
+            document.getElementById('y-result').innerText = '';
+            document.getElementById('calculate-y-button').replaceWith(document.getElementById('calculate-y-button').cloneNode(true));
+
+            
+            
+            
+            // Evento para calcular Y y actualizar el gráfico
+            document.getElementById('calculate-y-button').addEventListener('click', function() {
+                var inputX = parseFloat(document.getElementById('input-x').value);
+                
+                // Validar que se haya ingresado un número válido para X
+                if (isNaN(inputX)) {
+                    document.getElementById('y-result').innerText = 'Por favor, ingrese un valor numérico válido para X.';
+                    return;
+                }
+
+                // Calcular Y usando la ecuación de la regresión lineal
+                console.log(y_value, inputX, result.intercepcion, result.pendiente)
+                var y_value = result.intercepcion + result.pendiente * inputX;
+                document.getElementById('y-result').innerText = `Para X = ${inputX}, Y = ${y_value.toFixed(3)}`;
+
+                // Agregar el nuevo punto al gráfico
+                var newDataPoint = {
+                    x: [inputX],
+                    y: [y_value],
+                    mode: 'markers',
+                    marker: {
+                        color: 'red',
+                        size: 10,
+                        symbol: 'circle-open'
+                    },
+                    name: 'Predicción Y'
+                };
+
+                var updatedData = [trace1, trace2, newDataPoint];
+                Plotly.newPlot('regression-graph', updatedData, layout);
+            });
+
+
+
+
+
+            // Evento para calcular X y actualizar el gráfico
+            document.getElementById('calculate-x-button').addEventListener('click', function() {
+                var inputY = parseFloat(document.getElementById('input-y').value);
+                
+                // Validar que se haya ingresado un número válido para X
+                if (isNaN(inputY)) {
+                    document.getElementById('x-result').innerText = 'Por favor, ingrese un valor numérico válido para Y.';
+                    return;
+                }
+
+                // Calcular Y usando la ecuación de la regresión lineal
+                console.log(inputY, result.intercepcion, result.pendiente)
+
+                var x_value = (inputY - result.intercepcion) / result.pendiente;
+                document.getElementById('x-result').innerText = `Para Y = ${inputY}, X = ${x_value.toFixed(3)}`;
+
+                // Agregar el nuevo punto al gráfico
+                var newDataPoint = {
+                    x: [x_value],
+                    y: [inputY],
+                    mode: 'markers',
+                    marker: {
+                        color: 'red',
+                        size: 10,
+                        symbol: 'circle-open'
+                    },
+                    name: 'Predicción X'
+                };
+
+                var updatedData = [trace1, trace2, newDataPoint];
+                Plotly.newPlot('regression-graph', updatedData, layout);
+            });
+
+
+
+
+
+
+        })
+        .catch(error => {
+            document.getElementById('result').innerText = `Error: ${error.message}`;
+        });
+    });
+
+// Evento para reiniciar todo a su estado original
+document.getElementById('reset-button').addEventListener('click', function() {
+spreadsheet.setData(initialData); // Restaurar datos iniciales en la hoja de cálculo
+
+// Eliminar la fila de sumas si existe
+if (spreadsheet.getData().length > initialData.length) {
+    spreadsheet.deleteRow(initialData.length);
+}
+
+// Ocultar el div para ingresar X
+document.getElementById('div-input-x').style.display = 'none';
+document.getElementById('div-input-y').style.display = 'none';
+
+// Restaurar botón a "Calcular Regresión" y ocultar "Reiniciar"
+document.getElementById('calculate-button').style.display = 'block';
+document.getElementById('reset-button').style.display = 'none';
+
+// Limpiar eventos del botón calcular Y
+document.getElementById('calculate-y-button').replaceWith(document.getElementById('calculate-y-button').cloneNode(true));
+
+// Limpiar el gráfico y el resultado
+Plotly.purge('regression-graph');
+document.getElementById('regression-graph').innerHTML = '';
+document.getElementById('result').innerText = '';
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('click', function(event) {
+        if (event.target.closest('.formula-link')) {
+            event.preventDefault();
+            var target = event.target.closest('.formula-link');
+            var type = target.getAttribute('data-type');
+            var values = JSON.parse(target.getAttribute('data-values'));
+            var formulaContainer = document.getElementById('formula-container');
+            var formula = '';
+
+            if (type === 'r') {
+                formula = `\\[ r = \\frac{n\\sum{xy} - (\\sum{x})(\\sum{y})}{\\sqrt{[n\\sum{x^2} - (\\sum{x})^2][n\\sum{y^2} - (\\sum{y})^2]}} \\]`;
+                formula += `\\[ r = \\frac{${values.n}\\cdot${values.suma_xy} - (${values.suma_x})(${values.suma_y})}{\\sqrt{[${values.n}\\cdot${values.suma_x2} - (${values.suma_x})^2][${values.n}\\cdot${values.suma_y2} - (${values.suma_y})^2]}} \\]`;
+            } else if (type === 'r2') {
+                formula = `\\[ r^2 = (${values.r})^2 \\]`;
+                formula += `\\[ r^2 = ${values.r_cuadrado} \\]`;
+            } else if (type === 'pendiente') {
+                formula = `\\[ Pendiente (B) = \\frac{n\\sum{xy} - (\\sum{x})(\\sum{y})}{n\\sum{x^2} - (\\sum{x})^2} \\]`;
+                formula += `\\[ B = \\frac{${values.n}\\cdot${values.suma_xy} - (${values.suma_x})(${values.suma_y})}{${values.n}\\cdot${values.suma_x2} - (${values.suma_x})^2} \\]`;
+            } else if (type === 'intercepcion') {
+                formula = `\\[ Intercepción (A) = \\frac{\\sum{y} - B(\\sum{x})}{n} \\]`;
+                formula += `\\[ A = \\frac{${values.suma_y} - ${values.pendiente}(${values.suma_x})}{${values.n}} \\]`;
+            } else if (type === 'ecuacion') {
+                formula = `\\[ Y = ${values.pendiente}X + ${values.intercepcion} \\]`;
+            }
+
+            formulaContainer.innerHTML = formula;
+            MathJax.typesetPromise().then(() => {
+                document.getElementById('formula-modal').style.display = 'block';
+            });
+        }
+    });
+
+    document.querySelector('.close').addEventListener('click', function() {
+        document.getElementById('formula-modal').style.display = 'none';
+    });
+
+    window.addEventListener('click', function(event) {
+        if (event.target === document.getElementById('formula-modal')) {
+            document.getElementById('formula-modal').style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}
+   

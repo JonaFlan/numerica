@@ -1,0 +1,50 @@
+body {
+    background-image: url('../img/blueprint.webp');
+    background-size: cover; 
+    background-repeat: no-repeat;
+    background-position: center center;
+    height: 100vh; 
+    margin: 0;
+    display: flex;
+    align-items: center; 
+    justify-content: center; 
+}
+
+.content {
+    display: flex;
+    flex-direction: column; 
+    align-items: center; 
+    background: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+
+.header h1 {
+    font-size: 1.8rem;
+}
+
+.aa {
+    background: rgb(81,105,132);
+    color: white;
+    padding: 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.2s;
+    
+}
+
+.aa span {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.aa p {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.aa:hover {
+    transform: scale(1.1);
+}

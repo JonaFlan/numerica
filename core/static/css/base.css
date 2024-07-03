@@ -1,0 +1,47 @@
+.navbar {
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand {
+    font-size: 1.5rem;
+    position: relative;
+}
+
+.nav-link {
+    font-size: 1rem;
+    color: #007bff !important;
+    transition: color 0.2s;
+}
+
+.nav-link:hover {
+    color: #0056b3 !important;
+}
+
+.navbar-toggler {
+    border-color: rgba(0, 123, 255, 0.5);
+}
+
+.navbar-toggler-icon {
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba(0, 123, 255, 0.5)' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
+}
+
+#navbar-logo {
+    width: 80px; 
+    height: 80px;
+} 
+
+.navbar-brand .d-flex {
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.navbar-nav {
+    flex-grow: 1;
+    justify-content: flex-end;
+}
+
+.navbar-collapse {
+    flex-grow: 0;
+}

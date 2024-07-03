@@ -1,0 +1,89 @@
+// Formatear y mostrar el resultado
+            var resultContent = `
+                <p>
+                    <strong>Coeficiente de correlación (r):</strong> ${result.r} 
+                    <a href="#" class="formula-link" data-type="r" data-values='${JSON.stringify(result)}'>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="black" class="bi bi-caret-down-fill" viewBox="0 0 16 16"><path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+                        </svg>
+                    </a>
+                </p>
+                <p>
+                    <strong>Coeficiente de determinación (r²):</strong> ${result.r_cuadrado}
+                    <a href="#" class="formula-link" data-type="r2" data-values='${JSON.stringify(result)}'>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="black" class="bi bi-caret-down-fill" viewBox="0 0 16 16"><path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+                        </svg>
+                    </a>    
+                </p>
+                <p>
+                    <strong>Pendiente (B):</strong> ${result.pendiente}
+                    <a href="#" class="formula-link" data-type="pendiente" data-values='${JSON.stringify(result)}'>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="black" class="bi bi-caret-down-fill" viewBox="0 0 16 16"><path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+                        </svg>
+                    </a>
+                </p>
+                <p>
+                    <strong>Intercepción (A):</strong> ${result.intercepcion}
+                    <a href="#" class="formula-link" data-type="intercepcion" data-values='${JSON.stringify(result)}'>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="black" class="bi bi-caret-down-fill" viewBox="0 0 16 16"><path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+                        </svg>
+                    </a>
+                </p>
+                <p>
+                    <strong>Ecuación de la recta:</strong> ${result.ecuacion}
+                    <a href="#" class="formula-link" data-type="ecuacion" data-values='${JSON.stringify(result)}'>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="black" class="bi bi-caret-down-fill" viewBox="0 0 16 16"><path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+                        </svg>
+                    </a>
+                </p>
+            `;
+
+            document.getElementById('result').innerHTML = resultContent;
+            document.getElementById('reset-button').style.display = 'inline-block';
+            document.getElementById('calculate-button').style.display = 'none';
+
+
+
+
+
+            // Agregar evento de click para los enlaces de fórmula
+            document.querySelectorAll('.formula-link').forEach(link => {
+                link.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    var type = this.getAttribute('data-type');
+                    var values = JSON.parse(this.getAttribute('data-values'));
+                    var formulaContainer = document.getElementById('formula-container');
+                    var formula = '';
+
+                    if (type === 'r') {
+                        formula = `\\[ r = \\frac{n\\sum{xy} - (\\sum{x})(\\sum{y})}{\\sqrt{[n\\sum{x^2} - (\\sum{x})^2][n\\sum{y^2} - (\\sum{y})^2]}} \\]`;
+                        formula += `\\[ r = \\frac{${values.n}\\cdot${values.suma_xy} - (${values.suma_x})(${values.suma_y})}{\\sqrt{[${values.n}\\cdot${values.suma_x2} - (${values.suma_x})^2][${values.n}\\cdot${values.suma_y2} - (${values.suma_y})^2]}} \\]`;
+                    } else if (type === 'r2') {
+                        formula = `\\[ r^2 = (${values.r})^2 \\]`;
+                        formula += `\\[ r^2 = ${values.r_cuadrado} \\]`;
+                    } else if (type === 'pendiente') {
+                        formula = `\\[ Pendiente (B) = \\frac{n\\sum{xy} - (\\sum{x})(\\sum{y})}{n\\sum{x^2} - (\\sum{x})^2} \\]`;
+                        formula += `\\[ B = \\frac{${values.n}\\cdot${values.suma_xy} - (${values.suma_x})(${values.suma_y})}{${values.n}\\cdot${values.suma_x2} - (${values.suma_x})^2} \\]`;
+                    } else if (type === 'intercepcion') {
+                        formula = `\\[ Intercepción (A) = \\frac{\\sum{y} - B(\\sum{x})}{n} \\]`;
+                        formula += `\\[ A = \\frac{${values.suma_y} - ${values.pendiente}(${values.suma_x})}{${values.n}} \\]`;
+                    } else if (type === 'ecuacion') {
+                        formula = `\\[ Y = ${values.pendiente}X + ${values.intercepcion} \\]`;
+                    }
+
+                    formulaContainer.innerHTML = formula;
+                    MathJax.typesetPromise().then(() => {
+                        document.getElementById('formula-modal').style.display = 'block';
+                    });
+                });
+            });
+
+            // Manejar evento de cierre del modal
+            document.querySelector('.close').addEventListener('click', function() {
+                document.getElementById('formula-modal').style.display = 'none';
+            });
+
+            window.addEventListener('click', function(event) {
+                if (event.target === document.getElementById('formula-modal')) {
+                    document.getElementById('formula-modal').style.display = 'none';
+                }
+            });
