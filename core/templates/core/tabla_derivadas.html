@@ -1,0 +1,106 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Tabla de derivadas{% endblock %}
+
+{% block custom %}
+<link rel="stylesheet" href=" {% static 'css/tabla_derivadas.css' %} ">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.2/umd/popper.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<body>
+    <div class="container">
+        <h1>Tabla de derivadas</h1>
+        
+        <div class="mb-4 no-print">
+            <input type="text" id="searchInput" class="form-control" placeholder="Buscar una función...">
+        </div>
+        <button id="printButton" class="btn btn-primary mb-4 no-print">Imprimir Tablas</button>
+        
+        <h2>Derivadas Básicas</h2>
+        <table class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th>Función</th>
+                    <th>Derivada</th>
+                </tr>
+            </thead>
+            <tbody id="basicTableBody">
+                <!-- Las filas de la tabla se añadirán dinámicamente aquí -->
+            </tbody>
+        </table>
+
+        <h2 class="mt-5">Operaciones con Derivadas</h2>
+        <table class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th>Función</th>
+                    <th>Derivada</th>
+                </tr>
+            </thead>
+            <tbody id="operationsTableBody">
+                <!-- Las filas de la tabla se añadirán dinámicamente aquí -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const basicDerivatives = [
+            { func: 'k', deriv: '0', explanation: 'Se usa para derivar constantes. La derivada de una constante siempre es cero.' },
+            { func: 'ax', deriv: 'a', explanation: 'Se aplica a funciones lineales. La derivada es la pendiente de la línea.' },
+            { func: 'u^n', deriv: 'n · u^(n-1) · u\'', explanation: 'Regla de la potencia. Se usa para derivar cualquier función elevada a una potencia.' },
+            { func: '√u', deriv: 'u\' / (2√u)', explanation: 'Caso especial de la regla de la potencia para raíz cuadrada.' },
+            { func: 'e^u', deriv: 'e^u · u\'', explanation: 'Se usa para derivar funciones exponenciales con base e.' },
+            { func: 'a^u', deriv: 'a^u · ln(a) · u\'', explanation: 'Se aplica a funciones exponenciales con cualquier base a.' },
+            { func: 'ln(u)', deriv: 'u\' / u', explanation: 'Se usa para derivar logaritmos naturales.' },
+            { func: 'log_a(u)', deriv: 'u\' / (u · ln(a))', explanation: 'Se aplica a logaritmos con cualquier base a.' },
+            { func: 'sin(u)', deriv: 'cos(u) · u\'', explanation: 'Derivada de la función seno. Útil en trigonometría y análisis de ondas.' },
+            { func: 'cos(u)', deriv: '-sin(u) · u\'', explanation: 'Derivada de la función coseno. Importante en oscilaciones y movimiento periódico.' },
+            { func: 'tan(u)', deriv: 'sec^2(u) · u\'', explanation: 'Derivada de la tangente. Útil en problemas de pendientes y tasas de cambio.' },
+        ];
+
+        const operationDerivatives = [
+            { func: 'k · u', deriv: 'k · u\'', explanation: 'Regla del producto por una constante. Se usa cuando una función está multiplicada por una constante.' },
+            { func: 'k/u', deriv: '-k · u\' / u²', explanation: 'Regla del cociente con constante en el numerador. Útil cuando una constante se divide por una función.' },
+            { func: 'u + v', deriv: 'u\' + v\'', explanation: 'Regla de la suma. Se aplica cuando se suman dos funciones.' },
+            { func: 'u - v', deriv: 'u\' - v\'', explanation: 'Regla de la resta. Se usa cuando se restan dos funciones.' },
+            { func: 'u + v - w', deriv: 'u\' + v\' - w\'', explanation: 'Extensión de la regla de la suma y resta para tres funciones.' },
+            { func: 'u · v', deriv: 'u\' · v + u · v\'', explanation: 'Regla del producto. Se utiliza cuando se multiplican dos funciones.' },
+            { func: 'u/v', deriv: '(u\' · v - u · v\') / v²', explanation: 'Regla del cociente. Aplicada cuando una función se divide por otra.' }
+        ];
+
+        function populateTable(tableId, derivatives, filter = '') {
+            const tableBody = document.getElementById(tableId);
+            tableBody.innerHTML = '';
+            derivatives.forEach(item => {
+                if (item.func.toLowerCase().includes(filter.toLowerCase())) {
+                    const row = tableBody.insertRow();
+                    const funcCell = row.insertCell(0);
+                    const derivCell = row.insertCell(1);
+                    
+                    funcCell.innerHTML = `<span class="math" data-bs-toggle="tooltip" title="${item.explanation}">f(x) = ${item.func}</span>`;
+                    derivCell.innerHTML = `<span class="math">f'(x) = ${item.deriv}</span>`;
+                    
+                    new bootstrap.Tooltip(funcCell.querySelector('[data-bs-toggle="tooltip"]'));
+                }
+            });
+        }
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            populateTable('basicTableBody', basicDerivatives, e.target.value);
+            populateTable('operationsTableBody', operationDerivatives, e.target.value);
+        });
+
+        document.getElementById('printButton').addEventListener('click', () => {
+            window.print();
+        });
+
+        // Población inicial de las tablas
+        populateTable('basicTableBody', basicDerivatives);
+        populateTable('operationsTableBody', operationDerivatives);
+    </script>
+</body>
+{% endblock %}

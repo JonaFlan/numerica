@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
+import sympy as sp
 
 def realizar_regresion(data):
     try:
@@ -58,3 +59,17 @@ def realizar_regresion(data):
 
     except Exception as e:
         raise ValueError("Error en la función realizar_regresion: " + str(e))
+
+def calcular_derivada(funcion):
+    try:
+        # Convertir la expresión de la función en una expresión simbólica
+        x = sp.symbols('x')
+        expr = sp.sympify(funcion)
+
+        # Calcular la derivada
+        derivada = sp.diff(expr, x)
+
+        return str(derivada)
+    
+    except Exception as e:
+        raise ValueError("Error en la función calcular_derivada: " + str(e))

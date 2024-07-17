@@ -1,7 +1,88 @@
 {% extends "core/base.html" %}
+{% load static %}
 
-{% block title %}Derivadas{% endblock %}
+{% block title %}Calculadora de derivadas{% endblock %}
+
+{% block custom %}
+<link rel="stylesheet" href=" {% static 'css/derivadas.css' %} ">
+
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+{% endblock %}
 
 {% block content %}
-Derivadas
+<body>
+    <div class="container">
+        <div id="calculatorSection" class="no-print">
+            <h2>Calculadora de Derivadas</h2>
+            <div class="mb-3">
+                <label for="functionInput" class="form-label">Ingrese una función de x:</label>
+                <input type="text" class="form-control" id="functionInput" placeholder="Ej: x^2, sin(x), e^x">
+            </div>
+            <div class="calc-buttons">
+                <button class="btn btn-secondary" onclick="addToInput('x')">x</button>
+                <button class="btn btn-secondary" onclick="addToInput('^')">^</button>
+                <button class="btn btn-secondary" onclick="addToInput('+')">+</button>
+                <button class="btn btn-secondary" onclick="addToInput('-')">-</button>
+                <button class="btn btn-secondary" onclick="addToInput('*')">*</button>
+                <button class="btn btn-secondary" onclick="addToInput('/')">/</button>
+                <button class="btn btn-secondary" onclick="addToInput('sin(')">sin</button>
+                <button class="btn btn-secondary" onclick="addToInput('cos(')">cos</button>
+                <button class="btn btn-secondary" onclick="addToInput('tan(')">tan</button>
+                <button class="btn btn-secondary" onclick="addToInput('e')">e</button>
+                <button class="btn btn-secondary" onclick="addToInput('ln(')">ln</button>
+                <button class="btn btn-secondary" onclick="addToInput('(')">(</button>
+                <button class="btn btn-secondary" onclick="addToInput(')')">)</button>
+                <button class="btn btn-warning" onclick="clearInput()">C</button>
+                <button class="btn btn-danger" onclick="backspace()">⌫</button>
+            </div>
+            <button id="calculateButton" class="btn btn-primary mt-3">Calcular Derivada</button>
+            <div id="result" class="mt-3"></div>
+        </div>
+    </div>
+
+    <script>
+        function addToInput(value) {
+            const input = document.getElementById('functionInput');
+            input.value += value;
+            input.focus();
+        }
+
+        function clearInput() {
+            document.getElementById('functionInput').value = '';
+        }
+
+        function backspace() {
+            const input = document.getElementById('functionInput');
+            input.value = input.value.slice(0, -1);
+        }
+
+        document.getElementById('calculateButton').addEventListener('click', function() {
+            const funcion = document.getElementById('functionInput').value;
+            fetch('/calcular_derivada/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    'funcion': funcion
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('result').innerHTML = `
+                        <p>Función ingresada: \\(${data.funcion_original}\\)</p>
+                        <p>La derivada es: \\(${data.derivada}\\)</p>
+                    `;
+                    MathJax.typesetPromise();
+                } else {
+                    document.getElementById('result').innerHTML = `<p>Error: ${data.error}</p>`;
+                }
+            })
+            .catch(error => {
+                document.getElementById('result').innerHTML = `<p>Error: ${error.message}</p>`;
+            });
+        });
+    </script>
+</body>
 {% endblock %}

@@ -4,6 +4,7 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .utils import realizar_regresion
+import sympy as sp
 
 # Configurar el registro
 logger = logging.getLogger(__name__)
@@ -47,5 +48,23 @@ def calcular_regresion(request):
 def formularioR(request):
     return render(request, 'core/formularioR.html')
 
-def formularioD(request):
-    return render(request, 'core/formularioD.html')
+@csrf_exempt
+def calcular_derivada(request):
+    if request.method == 'POST':
+        funcion = request.POST.get('funcion', '')
+        try:
+            x = sp.symbols('x')
+            expr = sp.sympify(funcion.replace('^', '**'))
+            derivada = sp.diff(expr, x)
+            
+            # Formatear las expresiones en LaTeX
+            funcion_original_latex = sp.latex(expr).replace('**', '^')
+            derivada_latex = sp.latex(derivada).replace('**', '^')
+            
+            return JsonResponse({'success': True, 'funcion_original': funcion_original_latex, 'derivada': derivada_latex})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Método no permitido.'})
+
+def tabla_derivadas(request):
+    return render(request, 'core/tabla_derivadas.html')
